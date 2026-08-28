@@ -1,0 +1,75 @@
+/* ===== 设计 Token（简约 + Teal 强调 + 亮暗双主题）=====
+   与 theme.ts 中的 Naive UI 主题覆盖保持一致 */
+
+:root {
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --text-1: #18181b;
+  --text-2: #3f3f46;
+  --text-3: #6b7280;
+  --border: #e5e7eb;
+  --primary: #0d9488;
+  --primary-hover: #0f766e;
+  --primary-soft: #ccfbf1;
+  --danger: #dc2626;
+
+  /* 任务四态语义色 */
+  --status-todo: #6b7280;
+  --status-doing: #3b82f6;
+  --status-done: #10b981;
+  --status-cancelled: #9ca3af;
+
+  /* 便签窗口半透明背景（亮色） */
+  --sticky-bg: rgba(248, 249, 250, 0.88);
+  --sticky-surface: rgba(255, 255, 255, 0.55);
+  --sticky-border: rgba(229, 231, 235, 0.7);
+}
+
+html[data-theme="dark"] {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --text-1: #f1f5f9;
+  --text-2: #cbd5e1;
+  --text-3: #94a3b8;
+  --border: #334155;
+  --primary: #14b8a6;
+  --primary-hover: #2dd4bf;
+  --primary-soft: #134e4a;
+  --danger: #f87171;
+
+  --status-todo: #94a3b8;
+  --status-doing: #60a5fa;
+  --status-done: #34d399;
+  --status-cancelled: #64748b;
+
+  /* 便签窗口半透明背景（暗色） */
+  --sticky-bg: rgba(15, 23, 42, 0.88);
+  --sticky-surface: rgba(30, 41, 59, 0.55);
+  --sticky-border: rgba(51, 65, 85, 0.7);
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--text-1);
+}
+
+/* 便签窗口：html/body 透明，让窗口的 transparent 生效，半透明由 .sticky 容器承担 */
+html[data-window="sticky"],
+html[data-window="sticky"] body,
+html[data-window="sticky"] #app {
+  background: transparent;
+}
+
+/* 新闻窗口：与便签同形态的无边框透明窗口 */
+html[data-window="news"],
+html[data-window="news"] body,
+html[data-window="news"] #app {
+  background: transparent;
+}
