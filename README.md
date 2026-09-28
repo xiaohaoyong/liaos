@@ -6,7 +6,9 @@
 
 - 逐条记录待办事项，包含 **实际开始 / 计划完成 / 实际完成** 时间
 - 进度、分类、**四态状态**（待办 / 进行中 / 已完成 / 已取消）
-- 常驻系统托盘，一键新建待办、快捷同步、打开设置
+- **桌面便利贴**：常驻桌面的小纸片，六色可选、自由定位、可单独置顶于所有窗口之上，随数据一起 git 同步
+- 快捷待办列表（Ctrl+Shift+Space 呼出），与便利贴共用快捷键统一收起 / 恢复
+- 常驻系统托盘，一键新建待办、新建便利贴、快捷同步、打开设置
 - 数据存在本地 `app_data_dir`，通过内嵌 git 库同步，**不依赖系统 git**
 - 关闭窗口即最小化到托盘，不打扰
 
@@ -22,12 +24,14 @@
 
 | 版本 | 说明 | 下载 |
 |------|------|------|
+| [v0.2.0](https://github.com/xiaohaoyong/liaos/releases/tag/v0.2.0) | 新增桌面便利贴 | [liaos_0.2.0_x64-setup.exe](https://github.com/xiaohaoyong/liaos/releases/download/v0.2.0/liaos_0.2.0_x64-setup.exe) |
 | [v0.1.0](https://github.com/xiaohaoyong/liaos/releases/tag/v0.1.0) | 首个发布版 | [liaos_0.1.0_x64-setup.exe](https://github.com/xiaohaoyong/liaos/releases/download/v0.1.0/liaos_0.1.0_x64-setup.exe) |
 
 ## 使用说明
 
 - 首次启动后可在设置里配置远程仓库地址与访问令牌，之后每次数据变更会自动同步
-- 数据目录位于系统应用数据目录下（`tasks.json` / `categories.json` / `settings.json`），内部维护一个 git 仓库用于同步与备份
+- 数据目录位于系统应用数据目录下（`tasks.json` / `categories.json` / `settings.json` / `notes.json`），内部维护一个 git 仓库用于同步与备份
+- 便利贴：开机后自动恢复到桌面原位置；内容写满默认高度后每折一行自动长高；置顶的便利贴不受快捷键收起影响
 
 ## 开发与构建
 

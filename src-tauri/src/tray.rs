@@ -11,12 +11,13 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
     let sync_i = MenuItem::with_id(app, "sync", "立即同步", true, None::<&str>)?;
     let settings_i = MenuItem::with_id(app, "settings", "设置", true, None::<&str>)?;
     let toggle_sticky_i = MenuItem::with_id(app, "toggle-sticky", "显示/隐藏便签和资讯", true, None::<&str>)?;
+    let new_note_i = MenuItem::with_id(app, "new-note", "新建便利贴", true, None::<&str>)?;
     let hosts_i = MenuItem::with_id(app, "hosts", "Hosts 编辑器", true, None::<&str>)?;
     let quit_i = MenuItem::with_id(app, "quit", "退出程序", true, None::<&str>)?;
 
     let menu = Menu::with_items(
         app,
-        &[&open_i, &create_i, &sync_i, &settings_i, &toggle_sticky_i, &hosts_i, &quit_i],
+        &[&open_i, &create_i, &sync_i, &settings_i, &toggle_sticky_i, &new_note_i, &hosts_i, &quit_i],
     )?;
 
     let mut builder = TrayIconBuilder::with_id("main-tray")
@@ -43,6 +44,11 @@ pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
                 let _ = app.emit("tray-settings", ());
             }
             "toggle-sticky" => crate::sticky::toggle_sticky(app),
+            "new-note" => {
+                if let Err(e) = crate::notes::create_note_internal(app) {
+                    eprintln!("新建便利贴失败: {e}");
+                }
+            }
             "hosts" => crate::hosts::open_hosts_window(app),
             "quit" => app.exit(0),
             _ => {}

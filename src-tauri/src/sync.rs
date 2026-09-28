@@ -290,7 +290,7 @@ fn adopt_remote(
         .map_err(|e| e.to_string())?;
 
     if let Some(local) = local_head {
-        // 数据文件（tasks/categories）按 id 合并两边条目，本地先记的任务不能被覆盖丢失
+        // 数据文件（tasks/categories/notes）按 id 合并两边条目，本地先记的任务不能被覆盖丢失
         merge_local_data(repo, local)?;
         restore_local_files(repo, local, remote_tip)?;
         if has_changes(repo)? {
@@ -303,9 +303,10 @@ fn adopt_remote(
 /// 接管远程历史时，把本地数据条目按 id 并入远程版数据文件：
 /// - tasks.json：按 id 并集，同 id 取 updatedAt 较新的一方（远程无此文件则整体写入本地版）
 /// - categories.json：按 id 并集，同 id 取本机版（用户当前使用的名称）
+/// - notes.json：按 id 并集，同 id 取 updatedAt 较新的一方（与 tasks 同规则）
 fn merge_local_data(repo: &Repository, local: &git2::Commit<'_>) -> Result<(), String> {
     let local_tree = local.tree().map_err(|e| e.to_string())?;
-    merge_array_file(repo, &local_tree, "tasks.json", |local, remote| {
+    let newer_wins = |local: &serde_json::Value, remote: &serde_json::Value| -> bool {
         let newer = |v: &serde_json::Value| -> String {
             v.get("updatedAt")
                 .and_then(|t| t.as_str())
@@ -313,7 +314,9 @@ fn merge_local_data(repo: &Repository, local: &git2::Commit<'_>) -> Result<(), S
                 .to_string()
         };
         newer(local) >= newer(remote)
-    })?;
+    };
+    merge_array_file(repo, &local_tree, "tasks.json", newer_wins)?;
+    merge_array_file(repo, &local_tree, "notes.json", newer_wins)?;
     merge_array_file(repo, &local_tree, "categories.json", |_local, _remote| true)?;
     Ok(())
 }
@@ -402,7 +405,7 @@ fn merge_array_file(
 /// 接管远程历史时，从旧本地提交恢复设备相关文件：
 /// - 远程没有的文件（如 hosts.json）→ 恢复本地版
 /// - settings.json → 始终本地版（token/快捷键/自启动是本机配置，不能被远程覆盖）
-/// - 其余数据文件（tasks/categories）已由 merge_local_data 按 id 合并，此处跳过
+/// - 其余数据文件（tasks/categories/notes）已由 merge_local_data 按 id 合并，此处跳过
 fn restore_local_files(
     repo: &Repository,
     local: &git2::Commit<'_>,

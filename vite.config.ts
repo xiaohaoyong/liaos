@@ -11,7 +11,7 @@ export default defineConfig(async () => ({
   // Tauri 打包后资源用相对路径加载，必须设置为 './'，否则白屏
   base: "./",
 
-  // 多窗口入口：主界面 index.html + 便签 sticky.html + 资讯 news.html + Hosts 编辑器 hosts.html
+  // 多窗口入口：主界面 index.html + 便签 sticky.html + 资讯 news.html + Hosts 编辑器 hosts.html + 便利贴 note.html（多实例，query 传 id）
   build: {
     rollupOptions: {
       input: {
@@ -19,6 +19,7 @@ export default defineConfig(async () => ({
         sticky: "sticky.html",
         news: "news.html",
         hosts: "hosts.html",
+        note: "note.html",
       },
     },
   },

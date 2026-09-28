@@ -103,6 +103,40 @@ export interface ApplyOutcome {
   message: string;
 }
 
+// ===== 便利贴（桌面常驻小纸片，无时间/状态/分类等任务属性） =====
+
+// 便利贴纸片颜色（固定色板，不跟随深色模式）
+export type NoteColor = "yellow" | "pink" | "blue" | "green" | "purple" | "gray";
+
+// 一条便利贴（Rust 端 notes.json 对应结构）
+export interface Note {
+  id: string; // 唯一标识
+  content: string; // 大段文字内容
+  color: NoteColor; // 纸片颜色
+  x: number; // 窗口左上角 X（逻辑坐标）
+  y: number; // 窗口左上角 Y（逻辑坐标）
+  width: number; // 窗口逻辑宽度（高度随内容自适应，不持久化）
+  pinned: boolean; // 置顶（压在所有应用之上，且不受快捷键收起影响）
+  createdAt: string; // 创建时间（ISO 8601）
+  updatedAt: string; // 更新时间（ISO 8601，同步合并按此择新）
+}
+
+// 色板顺序（新建时按数量轮换）
+export const NOTE_COLORS: NoteColor[] = ["yellow", "pink", "blue", "green", "purple", "gray"];
+
+// 纸片配色：bg 纸面 / edge 底边描边（纸片厚度感）
+export const NOTE_COLOR_MAP: Record<NoteColor, { bg: string; edge: string }> = {
+  yellow: { bg: "#fcf3c5", edge: "#eddf9c" },
+  pink: { bg: "#fadce6", edge: "#eec2d2" },
+  blue: { bg: "#d8e9fa", edge: "#bcd4ef" },
+  green: { bg: "#daedd2", edge: "#c2dcb4" },
+  purple: { bg: "#e6dcf7", edge: "#d3c4ec" },
+  gray: { bg: "#f3f2ee", edge: "#e0ded6" },
+};
+
+// 便利贴局部更新补丁（updateNote 只传要改的字段，Rust 端按 id 合并）
+export type NotePatch = Partial<Pick<Note, "content" | "color" | "pinned" | "x" | "y" | "width">>;
+
 // 状态展示映射
 export const STATUS_LABEL: Record<TaskStatus, string> = {
   todo: "待办",

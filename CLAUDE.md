@@ -54,3 +54,31 @@ cd src-tauri && cargo check   # 仅编译检查 Rust 后端
 
 - **Naive UI 消息组件**：`App.vue` 自身 setup 里调用 `useMessage()` 会抛 `No outer <n-message-provider /> founded`——因为 `n-message-provider` 是"未来才渲染的子组件"，provide 尚未执行。所以 `App.vue` 用 `createDiscreteApi(["message"])`，而 `n-message-provider` 仍保留包裹（供 `TaskEditModal` / `SettingsModal` 等子组件用 `useMessage()`）。新增顶层逻辑不要回到 `useMessage`。
 - **残留 Vite 进程会导致白屏**：若 dev 时页面全白且报 `esbuild: The service is no longer running`，多半是旧的 Vite node 子进程残留。先 `taskkill` 残留的 node 进程再重启 dev，只杀 Tauri 进程不够。
+
+
+## Functional-Specification 自动维护规则
+
+业务知识按模块拆分沉淀：根目录 [`Functional-Specification.md`](Functional-Specification.md) **仅是索引**（模块 → 关键词 → 文件 → 最后更新），模块正文位于 [`docs/functional-spec/`](docs/functional-spec/) 目录，**每模块一个 Markdown 文件**（如 `docs/functional-spec/sign-management.md`）。必须遵守以下规则：
+
+### 读规则（每次用户提问后）
+
+1. 如果用户问题涉及业务逻辑，**先查根目录索引定位模块文件，再读 `docs/functional-spec/` 下对应的那一个模块文件**（禁止一次读入多个不相关模块）
+2. 如果文档中已有答案且代码未变更，直接基于文档回答，不再重新分析代码
+3. 如果文档缺失、不完整或存疑，再去分析代码
+
+### 写规则（每次分析代码后）
+
+1. 分析完任何业务模块的代码后，**必须同步更新 `docs/functional-spec/` 下对应模块文件**
+2. 更新内容包括：
+   - **业务规则** — 当前生效的判断逻辑、状态流转、业务约束
+   - **数据关联** — 涉及哪些表、字段含义、表之间的关系
+   - **常用查询场景** — 高频业务查询的入口方法、筛选条件、关联链
+   - **历史变更** — 如果发现了代码中有调整痕迹（如注释、废弃方法、条件分支差异），记录调整前/后的逻辑
+   - **已知坑点** — 废弃字段、遗留代码、命名误导、容易误判的地方
+3. 如果修改了业务逻辑（如签约规则调整），在模块文件的"历史变更"中追加记录：**调整前是什么、调整后是什么、变更日期**
+4. 更新后同步刷新根目录索引中该模块的"最后更新"日期；若是新模块，在 `docs/functional-spec/` 新建文件并在索引表登记（从"待补充"移除）
+5. **禁止只分析代码而不更新文档**
+
+### 记录格式
+
+每模块一个文件，文件内包含：业务概述、核心实体（表/字段）、当前业务规则、历史变更记录、常用查询场景、已知坑点、相关文件路径。

@@ -14,11 +14,13 @@ import {
 import TaskList from "./components/TaskList.vue";
 import TaskEditModal from "./components/TaskEditModal.vue";
 import SettingsModal from "./components/SettingsModal.vue";
+import NotesPanel from "./components/NotesPanel.vue";
 import { loadData, syncNow } from "./api";
 import { listen } from "@tauri-apps/api/event";
 import { useTasksStore } from "./stores/tasks";
 import { useCategoriesStore } from "./stores/categories";
 import { useSettingsStore } from "./stores/settings";
+import { useNotesStore } from "./stores/notes";
 import type { Task, TaskStatus } from "./types";
 import { STATUS_LABEL } from "./types";
 import { lightThemeOverrides, darkThemeOverrides } from "./theme";
@@ -27,10 +29,14 @@ const { message } = createDiscreteApi(["message"]);
 const tasksStore = useTasksStore();
 const categoriesStore = useCategoriesStore();
 const settingsStore = useSettingsStore();
+const notesStore = useNotesStore();
 
 const showEdit = ref(false);
 const editingTask = ref<Task | null>(null);
 const showSettings = ref(false);
+
+// 主内容区视图：任务列表 / 便利贴管理区（侧边栏切换）
+const viewMode = ref<"tasks" | "notes">("tasks");
 
 // 筛选条件：分类（侧边栏）+ 状态（顶部分段筛选，默认「未完成」）
 const categoryFilter = ref<string>("all");
@@ -132,6 +138,7 @@ async function reload() {
   } catch (e) {
     message.error("加载数据失败：" + e);
   }
+  notesStore.load().catch(() => {});
 }
 
 onMounted(async () => {
@@ -143,6 +150,8 @@ onMounted(async () => {
   });
   // 数据联动：便签窗口等其它窗口保存后广播 data-changed，这里重新加载
   await listen("data-changed", () => reload());
+  // 便利贴联动：便签窗口/管理区改动后定向广播，刷新侧边栏角标与面板
+  await listen("notes-changed", () => notesStore.load().catch(() => {}));
 
   await reload();
 });
@@ -189,11 +198,23 @@ async function handleSync() {
 
           <nav class="nav">
             <button
+              class="nav-item"
+              :class="{ active: viewMode === 'notes' }"
+              @click="viewMode = 'notes'"
+            >
+              <span class="nav-label">便利贴</span>
+              <span v-if="notesStore.notes.length > 0" class="nav-count">{{
+                notesStore.notes.length
+              }}</span>
+            </button>
+            <div class="nav-divider"></div>
+
+            <button
               v-for="item in navItems"
               :key="item.value"
               class="nav-item"
-              :class="{ active: categoryFilter === item.value }"
-              @click="categoryFilter = item.value"
+              :class="{ active: viewMode === 'tasks' && categoryFilter === item.value }"
+              @click="categoryFilter = item.value; viewMode = 'tasks'"
             >
               <span class="nav-label">{{ item.label }}</span>
               <span v-if="item.count > 0" class="nav-count">{{ item.count }}</span>
@@ -222,26 +243,30 @@ async function handleSync() {
         </aside>
 
         <main class="main">
-          <header class="main-header">
-            <h2 class="main-title">{{ currentTitle }}</h2>
-            <n-radio-group v-model:value="statusFilter" size="small">
-              <n-radio-button
-                v-for="o in statusOptions"
-                :key="o.value"
-                :value="o.value"
-              >
-                {{ o.label }}
-              </n-radio-button>
-            </n-radio-group>
-            <n-button type="primary" @click="openCreate">新建</n-button>
-          </header>
+          <template v-if="viewMode === 'tasks'">
+            <header class="main-header">
+              <h2 class="main-title">{{ currentTitle }}</h2>
+              <n-radio-group v-model:value="statusFilter" size="small">
+                <n-radio-button
+                  v-for="o in statusOptions"
+                  :key="o.value"
+                  :value="o.value"
+                >
+                  {{ o.label }}
+                </n-radio-button>
+              </n-radio-group>
+              <n-button type="primary" @click="openCreate">新建</n-button>
+            </header>
 
-          <TaskList
-            :tasks="filteredTasks"
-            @edit="openEdit"
-            @delete="handleDelete"
-            @status="handleStatus"
-          />
+            <TaskList
+              :tasks="filteredTasks"
+              @edit="openEdit"
+              @delete="handleDelete"
+              @status="handleStatus"
+            />
+          </template>
+
+          <NotesPanel v-else />
         </main>
 
         <TaskEditModal v-model:show="showEdit" :task="editingTask" />
@@ -314,6 +339,12 @@ async function handleSync() {
 }
 .nav-item.active .nav-count {
   color: var(--primary);
+}
+
+.nav-divider {
+  height: 1px;
+  margin: 8px 4px;
+  background: var(--border);
 }
 
 .nav-add {

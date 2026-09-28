@@ -1,6 +1,6 @@
 // 调用 Tauri 后端 command 的统一封装
 import { invoke } from "@tauri-apps/api/core";
-import type { AppData, Task, Category, Settings, NewsCache, HostsConfig, HostsStatus, ApplyOutcome } from "./types";
+import type { AppData, Task, Category, Settings, NewsCache, HostsConfig, HostsStatus, ApplyOutcome, Note, NotePatch } from "./types";
 
 // 一次性加载完整应用数据（tasks + categories + settings）
 export async function loadData(): Promise<AppData> {
@@ -72,4 +72,31 @@ export async function applyHosts(): Promise<ApplyOutcome> {
 // 修改呼出 Hosts 编辑器的全局快捷键（Rust 端注销旧键、注册新键并持久化）
 export async function setHostsHotkey(hotkey: string): Promise<void> {
   await invoke("set_hosts_hotkey", { hotkey });
+}
+
+// ===== 便利贴 =====
+
+// 加载全部便利贴（app_data_dir/notes.json）
+export async function loadNotes(): Promise<Note[]> {
+  return invoke<Note[]>("load_notes");
+}
+
+// 新建便利贴（Rust 端写数据 + 创建桌面窗口）
+export async function createNote(): Promise<Note> {
+  return invoke<Note>("create_note");
+}
+
+// 局部更新一条便利贴（Rust 端在磁盘最新版上按 id 合并，避免多窗口覆盖竞态）
+export async function updateNote(id: string, patch: NotePatch): Promise<void> {
+  await invoke("update_note", { id, patch });
+}
+
+// 删除便利贴（Rust 端删数据 + 关闭对应窗口）
+export async function deleteNote(id: string): Promise<void> {
+  await invoke("delete_note", { id });
+}
+
+// 定位便利贴：拉回屏幕可见区域并显示聚焦（找回被拖到屏幕外的便签）
+export async function relocateNote(id: string): Promise<void> {
+  await invoke("relocate_note", { id });
 }

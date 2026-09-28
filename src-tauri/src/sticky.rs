@@ -44,19 +44,34 @@ pub fn create_sticky_window(app: &tauri::AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
-/// 显示/隐藏切换（便签 + 新闻窗口联动）：隐藏→两窗同时取消置顶并隐藏；
-/// 呼出→两窗同时置顶显示，焦点只给便签（新闻窗口同屏但不抢焦点）。
+/// 显示/隐藏切换（便签 + 新闻 + 非置顶便利贴联动）：
+/// 隐藏→便签/新闻/非置顶便利贴同时取消置顶并隐藏；呼出→便签/新闻置顶显示
+/// （焦点只给便签，新闻同屏不抢焦点），便利贴仅恢复显示【不置顶】（常驻桌面属性）；
+/// 置顶便利贴两分支都不动（常驻提醒，永显且保持置顶）。
 /// 全局快捷键与托盘菜单均走此入口，联动在此一处生效。
 pub fn toggle_sticky(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("sticky") {
         let visible = window.is_visible().unwrap_or(false);
         let news = app.get_webview_window("news");
+        let pinned = crate::notes::pinned_note_ids(app);
+        let note_windows: Vec<_> = app
+            .webview_windows()
+            .into_iter()
+            .filter(|(label, _)| label.starts_with("note-"))
+            .map(|(label, w)| (label.trim_start_matches("note-").to_string(), w))
+            .collect();
         if visible {
             let _ = window.set_always_on_top(false);
             let _ = window.hide();
             if let Some(n) = &news {
                 let _ = n.set_always_on_top(false);
                 let _ = n.hide();
+            }
+            for (id, w) in &note_windows {
+                if !pinned.contains(id) {
+                    let _ = w.set_always_on_top(false);
+                    let _ = w.hide();
+                }
             }
         } else {
             // 先显示新闻窗口，再呼出便签并聚焦
@@ -69,6 +84,13 @@ pub fn toggle_sticky(app: &tauri::AppHandle) {
             let _ = window.show();
             let _ = window.unminimize();
             let _ = window.set_focus();
+            for (id, w) in &note_windows {
+                if !pinned.contains(id) {
+                    // 恢复显示但不置顶：便利贴是常驻桌面属性，与便签「呼出即置顶」不同
+                    let _ = w.show();
+                    let _ = w.unminimize();
+                }
+            }
         }
     }
 }

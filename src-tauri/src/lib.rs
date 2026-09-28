@@ -1,5 +1,6 @@
 mod hosts;
 mod news;
+mod notes;
 mod sticky;
 mod storage;
 mod sync;
@@ -232,6 +233,8 @@ pub fn run() {
             if let Err(e) = news::create_news_window(app.handle()) {
                 eprintln!("创建新闻窗口失败: {e}");
             }
+            // 便利贴窗口：常驻桌面，每条便签一个独立小窗（单窗失败内部容错不阻断）
+            notes::create_note_windows(app.handle());
             if let Err(e) = sticky::register_hotkey(app.handle()) {
                 eprintln!("注册全局快捷键失败: {e}");
             }
@@ -245,7 +248,13 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                let _ = window.hide();
+                if window.label().starts_with("note-") {
+                    // 便利贴无标题栏，CloseRequested 只会来自 Alt+F4：
+                    // 转发给该窗口前端做删除确认（不确认则留在桌面），数据无损
+                    let _ = window.emit_to(window.label(), "note-close-requested", ());
+                } else {
+                    let _ = window.hide();
+                }
                 api.prevent_close();
             }
         })
@@ -263,7 +272,12 @@ pub fn run() {
             hosts::hosts_status,
             hosts::apply_hosts,
             news::get_news,
-            news::refresh_news
+            news::refresh_news,
+            notes::load_notes,
+            notes::create_note,
+            notes::update_note,
+            notes::delete_note,
+            notes::relocate_note
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

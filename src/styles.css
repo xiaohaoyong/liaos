@@ -73,3 +73,19 @@ html[data-window="news"] body,
 html[data-window="news"] #app {
   background: transparent;
 }
+
+/* 便利贴窗口：无边框透明小纸片，纸片样式由 NoteApp 承担（不跟随深色模式） */
+html[data-window="note"],
+html[data-window="note"] body,
+html[data-window="note"] #app {
+  background: transparent;
+}
+/* 文档层禁止滚动：body 默认 8px margin + .note 的 100vh/4px 底边框会溢出文档
+   12px 左右，导致常驻竖向滚动条；内容滚动一律由 textarea 自己管 */
+html[data-window="note"] {
+  overflow: hidden;
+}
+html[data-window="note"] body {
+  margin: 0;
+  overflow: hidden;
+}

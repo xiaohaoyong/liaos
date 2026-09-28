@@ -12,7 +12,7 @@ import {
 } from "naive-ui";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
-import { loadData, focusWindow } from "./api";
+import { loadData, focusWindow, createNote } from "./api";
 import { useTasksStore } from "./stores/tasks";
 import { useCategoriesStore } from "./stores/categories";
 import { useSettingsStore } from "./stores/settings";
@@ -80,6 +80,15 @@ function openMain() {
 function hideSelf() {
   getCurrentWindow().hide();
 }
+
+// 新建便利贴（Rust 端写数据并在桌面级联位置弹出小纸片）
+async function addNote() {
+  try {
+    await createNote();
+  } catch (e) {
+    message.error("新建便利贴失败：" + e);
+  }
+}
 </script>
 
 <template>
@@ -117,6 +126,10 @@ function hideSelf() {
               <span class="item-cat">{{ t.category }}</span>
             </div>
           </div>
+        </div>
+
+        <div class="sticky-footer">
+          <n-button size="tiny" quaternary class="add-note-btn" @click="addNote">＋ 便利贴</n-button>
         </div>
 
         <StickyQuickAdd v-model:show="showQuickAdd" />
@@ -162,6 +175,13 @@ function hideSelf() {
   flex: 1;
   overflow-y: auto;
   padding: 4px 12px 12px;
+}
+
+.sticky-footer {
+  flex-shrink: 0;
+  padding: 0 12px 8px;
+  display: flex;
+  justify-content: center;
 }
 
 .sticky-list {

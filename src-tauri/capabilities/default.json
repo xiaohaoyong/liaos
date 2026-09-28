@@ -1,8 +1,8 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window, sticky window, news window and hosts window",
-  "windows": ["main", "sticky", "news", "hosts"],
+  "description": "Capability for the main window, sticky window, news window, hosts window and note windows",
+  "windows": ["main", "sticky", "news", "hosts", "note-*"],
   "permissions": [
     "core:default",
     "opener:default",
@@ -14,6 +14,9 @@
     "core:window:allow-show",
     "core:window:allow-set-focus",
     "core:window:allow-set-always-on-top",
-    "core:window:allow-start-dragging"
+    "core:window:allow-start-dragging",
+    "core:window:allow-set-size",
+    "core:window:allow-start-resize-dragging",
+    "core:window:allow-destroy"
   ]
 }
